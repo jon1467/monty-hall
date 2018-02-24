@@ -12,21 +12,27 @@ body {
     line-height: 26.4px;
 }
 
-.step-group {
+.scoreboard {
+    display: flex;
+}
+.score-element + .score-element {
+    margin-left: 15px;
+}
+
+.control-group {
     margin: 10px 0;
     display: flex;
 }
 
 .instruction {
     margin-right: 15px;
+    height: 45px;
 }
-.next {
-    margin-right: 15px;
-}
-.autostep-checkbox {
+.checkbox {
     margin: auto 0;
+    margin-left: 15px;
 }
-.autostep-text {
+.check-text {
     margin-left: 5px;
 }
 
@@ -61,7 +67,6 @@ body {
 
 .door-winning {
     background: #41f4a9;
-    border-color: #36a073;
 }
 
 .slider-container {

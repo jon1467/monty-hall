@@ -14,44 +14,52 @@
             this.onChange = this.onChange.bind(this);
             this.resetGame = this.resetGame.bind(this);
             this.selectDoor = this.selectDoor.bind(this);
-            this.toggleStep = this.toggleStep.bind(this);
+            this.toggleShowWinning = this.toggleShowWinning.bind(this);
             this.next = this.next.bind(this);
+            this.eliminateDoors = this.eliminateDoors.bind(this);
+            this.getPercentageWon = this.getPercentageWon.bind(this);
+
+            this.instructionList = [
+                "Pick a door",
+                "One of the two remaining doors contains the prize. Select (or keep) the door you want and press next."
+            ];
 
             this.state = {
                 doors: [],
                 noDoors: 3,
                 prizeVisible: false,
                 winningDoor: 0,
+                showWinningDoor: false,
                 selectedDoor: null,
-                instruction: "Pick a door",
-                autoStep: false
+                instruction: this.instructionList[0],
+                autoStep: false,
+                won: 0,
+                lost: 0
             };
         }
 
         componentDidMount() {
             this.resetGame();
-            this.makeDoors();
         }
 
         onChange(data) {
-            this.setState({noDoors: data.target.value});
-            this.makeDoors();
-            this.resetGame();
+            this.setState({noDoors: data.target.value}, this.resetGame);
         }
 
         makeDoors() {
+            let winningDoor = Math.floor(Math.random() * this.state.noDoors);
             let doors = [];
 
             for(let i = 0; i < this.state.noDoors; i++){
                 doors.push({
                     id: i,
-                    winningDoor: (i === this.state.winningDoor),
+                    winningDoor: (i === winningDoor),
                     open: false,
                     selected: false
                 });
             }
 
-            this.setState({doors: doors});
+            this.setState({doors: doors, winningDoor: winningDoor});
         }
 
         selectDoor(doorID) {
@@ -70,19 +78,58 @@
         }
 
         resetGame() {
-            this.setState({winningDoor: Math.floor(Math.random() * (this.props.maxDoors - this.props.minDoors + 1))})
+            this.makeDoors();
+            this.setState({instruction: this.instructionList[0]}, this.report)
         }
 
         next() {
-            if(!this.state.autoStep){
-                console.log("next step!");
+            if(this.state.instruction === this.instructionList[0]){
+                this.setState({instruction: this.instructionList[1]}, this.eliminateDoors);
+            }
+            if(this.state.instruction === this.instructionList[1]){
+                if(this.state.selectedDoor === this.state.winningDoor){
+                    this.setState({instruction: "Congratulations! You guessed correctly. Reset to have another go."}, this.won);
+                }
+                else {
+                    this.setState({instruction: "Tough luck. You guessed wrongly. Reset to have another go."}, this.lost);
+                }
             }
         }
 
-        toggleStep() {
-            this.setState(s => {
-                return {autoStep: !s.autoStep};
+        won() {
+            this.setState(s => { return {won: s.won + 1}; });
+        }
+
+        lost() {
+            this.setState(s => { return {lost: s.lost + 1}; });
+        }
+
+        eliminateDoors() {
+            let doors = this.state.doors.slice(0);
+            let decoy = null;
+            if(this.state.selectedDoor === this.state.winningDoor){
+                while(decoy === null || this.state.winningDoor === decoy) {
+                    decoy = Math.floor(Math.random() * this.state.noDoors);
+                }
+            }
+
+            doors.forEach(door => {
+                if((!door.selected && !door.winningDoor) && door.id !== decoy){
+                    door.open = true;
+                }
             });
+
+            this.setState({doors: doors});
+        }
+
+        toggleShowWinning() {
+            this.setState(s => {
+                return {showWinningDoor: !s.showWinningDoor};
+            })
+        }
+
+        getPercentageWon() {
+            return (this.state.won / (this.state.won + this.state.lost)) * 100;
         }
 
         render() {
@@ -92,12 +139,13 @@
             components.push(React.createElement('div', {className: 'head', key: key++}, "Monty Hall Problem"));
 
             let instructions = React.createElement('div', {className: 'instruction', key: key++}, this.state.instruction);
-            let stepComponents = [];
-            stepComponents.push(React.createElement('button', {className: 'next', onClick: this.next, key: key++}, "next"));
-            stepComponents.push(React.createElement('input', {className: 'autostep-checkbox', type: 'checkbox', onChange: this.toggleStep, key: key++}));
-            stepComponents.push(React.createElement('div', {className: 'autostep-text', key: key++}, "autostep"));
-            let stepGroup = React.createElement('div', {className: 'step-group', key: key++}, stepComponents);
-            components.push(React.createElement('div', {className: 'step-container', key: key++}, instructions, stepGroup));
+            let controlComponents = [];
+            controlComponents.push(React.createElement('button', {className: 'reset', onClick: this.resetGame, key: key++}, "reset"));
+            controlComponents.push(React.createElement('button', {className: 'next', onClick: this.next, key: key++}, "next"));
+            controlComponents.push(React.createElement('input', {className: 'checkbox', type: 'checkbox', onChange: this.toggleShowWinning, key: key++}));
+            controlComponents.push(React.createElement('div', {className: 'check-text', key: key++}, "show winning door"));
+            let controlGroup = React.createElement('div', {className: 'control-group', key: key++}, controlComponents);
+            components.push(React.createElement('div', {className: 'control-container', key: key++}, instructions, controlGroup));
 
             let sliderComponents = [];
             sliderComponents.push(React.createElement('div', {className: 'slider-counter', key: key++}, `${this.state.noDoors} Doors`));
@@ -113,11 +161,18 @@
             ));
             components.push(React.createElement('div', {className: 'slider-container', key: key++}, sliderComponents));
 
+            let scoreComponents = [];
+            scoreComponents.push(React.createElement('div', {className: 'win-score score-element', key: key++}, `${this.state.won} won`));
+            scoreComponents.push(React.createElement('div', {className: 'lose-score score-element', key: key++}, `${this.state.lost} lost`));
+            scoreComponents.push(React.createElement('div', {className: 'ratio-score score-element', key: key++}, `${this.getPercentageWon()}% won`));
+            components.push(React.createElement('div', {className: 'scoreboard', key: key++}, scoreComponents));
+
             let doors = [];
             this.state.doors.forEach(door => {
-                doors.push(React.createElement(Door, {id: door.id, winningDoor: door.winningDoor, open: door.open, selected: door.selected, select: this.selectDoor, key: key++}));
+                doors.push(React.createElement(Door, {id: door.id, winningDoor: door.winningDoor, showWinningDoor: this.state.showWinningDoor, open: door.open, selected: door.selected, select: this.selectDoor, key: key++}));
             });
             components.push(React.createElement('div', {className: 'door-row', key: key++}, doors));
+
 
             return React.createElement('div', {className: ''}, components);
         }
@@ -140,7 +195,12 @@
         }
 
         render() {
-            return React.createElement('div', {className: 'door' + (this.props.selected ? ' door-selected' : ''), onClick: this.select});
+            let className = 'door'
+                + (this.props.selected ? ' door-selected' : '')
+                + ((this.props.winningDoor && this.props.showWinningDoor) ? ' door-winning' : '')
+                + (this.props.open ? ' door-open' : '');
+
+            return React.createElement('div', {className: className, onClick: (this.props.open ? '' : this.select)});
         }
     }
 
