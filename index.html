@@ -12,22 +12,92 @@
             super();
 
             this.onChange = this.onChange.bind(this);
+            this.resetGame = this.resetGame.bind(this);
+            this.selectDoor = this.selectDoor.bind(this);
+            this.toggleStep = this.toggleStep.bind(this);
+            this.next = this.next.bind(this);
 
             this.state = {
-                noDoors: 3
+                doors: [],
+                noDoors: 3,
+                prizeVisible: false,
+                winningDoor: 0,
+                selectedDoor: null,
+                instruction: "Pick a door",
+                autoStep: false
             };
+        }
+
+        componentDidMount() {
+            this.resetGame();
+            this.makeDoors();
         }
 
         onChange(data) {
             this.setState({noDoors: data.target.value});
-            console.log(data.target.value);
+            this.makeDoors();
+            this.resetGame();
+        }
+
+        makeDoors() {
+            let doors = [];
+
+            for(let i = 0; i < this.state.noDoors; i++){
+                doors.push({
+                    id: i,
+                    winningDoor: (i === this.state.winningDoor),
+                    open: false,
+                    selected: false
+                });
+            }
+
+            this.setState({doors: doors});
+        }
+
+        selectDoor(doorID) {
+            let doors = this.state.doors.slice(0);
+
+            doors.forEach(door => {
+                if(door.id === this.state.selectedDoor){
+                    door.selected = false;
+                }
+                if(door.id === doorID){
+                    door.selected = true;
+                }
+            });
+
+            this.setState({doors: doors, selectedDoor: doorID})
+        }
+
+        resetGame() {
+            this.setState({winningDoor: Math.floor(Math.random() * (this.props.maxDoors - this.props.minDoors + 1))})
+        }
+
+        next() {
+            if(!this.state.autoStep){
+                console.log("next step!");
+            }
+        }
+
+        toggleStep() {
+            this.setState(s => {
+                return {autoStep: !s.autoStep};
+            });
         }
 
         render() {
-            let components = []
+            let components = [];
             let key = 0;
 
             components.push(React.createElement('div', {className: 'head', key: key++}, "Monty Hall Problem"));
+
+            let instructions = React.createElement('div', {className: 'instruction', key: key++}, this.state.instruction);
+            let stepComponents = [];
+            stepComponents.push(React.createElement('button', {className: 'next', onClick: this.next, key: key++}, "next"));
+            stepComponents.push(React.createElement('input', {className: 'autostep-checkbox', type: 'checkbox', onChange: this.toggleStep, key: key++}));
+            stepComponents.push(React.createElement('div', {className: 'autostep-text', key: key++}, "autostep"));
+            let stepGroup = React.createElement('div', {className: 'step-group', key: key++}, stepComponents);
+            components.push(React.createElement('div', {className: 'step-container', key: key++}, instructions, stepGroup));
 
             let sliderComponents = [];
             sliderComponents.push(React.createElement('div', {className: 'slider-counter', key: key++}, `${this.state.noDoors} Doors`));
@@ -35,8 +105,8 @@
                 React.createElement('input', {
                     className: 'doors-slider',
                     type: 'range',
-                    min: 3,
-                    max: 100,
+                    min: this.props.minDoors,
+                    max: this.props.maxDoors,
                     value: this.state.noDoors,
                     onChange: this.onChange
                 })
@@ -44,9 +114,9 @@
             components.push(React.createElement('div', {className: 'slider-container', key: key++}, sliderComponents));
 
             let doors = [];
-            for(let i = 0; i < this.state.noDoors; i++){
-                doors.push(React.createElement(Door, {key: key++}));
-            }
+            this.state.doors.forEach(door => {
+                doors.push(React.createElement(Door, {id: door.id, winningDoor: door.winningDoor, open: door.open, selected: door.selected, select: this.selectDoor, key: key++}));
+            });
             components.push(React.createElement('div', {className: 'door-row', key: key++}, doors));
 
             return React.createElement('div', {className: ''}, components);
@@ -57,19 +127,26 @@
 
         constructor() {
             super();
+
+            this.select = this.select.bind(this);
+
             this.state = {
-                open: false
+                selected: false
             };
         }
 
+        select() {
+            this.props.select(this.props.id);
+        }
+
         render() {
-            return (<div className="door" ></div>);
+            return React.createElement('div', {className: 'door' + (this.props.selected ? ' door-selected' : ''), onClick: this.select});
         }
     }
 
 
     ReactDOM.render(
-        <GameShow />,
+        <GameShow minDoors={3} maxDoors={100} />,
         document.getElementById('root')
     );
 </script>
