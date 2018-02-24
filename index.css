@@ -1,0 +1,78 @@
+.head {
+    font-size: 48px;
+    margin-bottom: 50px;
+}
+
+body {
+    font-family: "Arial Black", "Arial Bold", Gadget, sans-serif;
+    font-size: 18px;
+    font-style: normal;
+    font-variant: normal;
+    font-weight: 500;
+    line-height: 26.4px;
+}
+
+.door-row {
+    display: flex;
+    flex-wrap: wrap;
+    border: 2px solid grey;
+}
+
+.door {
+    background: #4286f4;
+    height: 80px;
+    width: 50px;
+
+    margin: 20px 10px;
+
+    border-color: #365fa0;
+    border-style: solid;
+    border-width: 4px 4px 0 4px;
+}
+
+.slider-container {
+    display: flex;
+}
+
+.slider-counter {
+    margin: auto;
+    width: 120px;
+}
+
+.slider-box {
+    width: 100%;
+}
+
+.doors-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 80%;
+    height: 25px;
+    background: #d3d3d3;
+    outline: none;
+    opacity: 0.7;
+    -webkit-transition: .2s;
+    transition: opacity .2s;
+
+    margin: 10px 0;
+}
+
+.doors-slider:hover {
+    opacity: 1;
+}
+
+.doors-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 25px;
+    height: 25px;
+    background: #4286f4;
+    cursor: pointer;
+}
+
+.doors-slider::-moz-range-thumb {
+    width: 25px;
+    height: 25px;
+    background: #4286f4;
+    cursor: pointer;
+}
